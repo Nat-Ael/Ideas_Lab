@@ -1,0 +1,350 @@
+
+
+<style>
+html, body {
+  height: 100%;
+}
+.pane {
+  flex: 1;
+  min-height: 0; /* critical for proper flex scrolling */
+}
+
+.board-scroll {
+  flex: 1;
+  min-height: 0;
+}
+body {
+  margin: 0;
+}
+
+.app {
+  position: fixed;
+  inset: 0;          /* shorthand for top:0; right:0; bottom:0; left:0 */
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0; /* optional: remove rounded corners */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#0f0f10;
+  --bg1:#161618;
+  --bg2:#1e1e21;
+  --bg3:#26262a;
+  --border:#2e2e33;
+  --border2:#3a3a40;
+  --text1:#e8e8ea;
+  --text2:#9a9aa8;
+  --text3:#5c5c68;
+}
+.app{font-family:var(--font-sans,'Inter',sans-serif);font-size:14px;color:var(--text1);background:var(--bg0);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:0.5px solid var(--border);background:var(--bg1)}
+.topbar-title{font-size:13px;font-weight:500;color:var(--text1);letter-spacing:0.01em}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.tab-pill{padding:5px 13px;border-radius:20px;font-size:12px;cursor:pointer;border:0.5px solid var(--border2);background:none;color:var(--text2);transition:all 0.15s}
+.tab-pill.active{background:var(--text1);color:var(--bg0);border-color:transparent}
+.tab-pill:hover:not(.active){background:var(--bg3);color:var(--text1)}
+.obs-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;border:0.5px solid var(--border2);background:none;font-size:11px;color:var(--text2);cursor:pointer;transition:all 0.15s}
+.obs-btn:hover{background:var(--bg3);color:var(--text1)}
+
+.pane{display:none}
+.pane.active{display:flex;flex-direction:column}
+
+.board-scroll{display:flex;gap:10px;padding:14px;overflow-x:auto;align-items:flex-start;min-height:480px;background:var(--bg0)}
+.board-scroll::-webkit-scrollbar{height:4px}
+.board-scroll::-webkit-scrollbar-track{background:transparent}
+.board-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+.col{flex-shrink:0;width:192px;display:flex;flex-direction:column;border-radius:10px;overflow:hidden;border:0.5px solid var(--border);background:var(--bg1)}
+.col-header{padding:10px 12px 9px;display:flex;align-items:center;gap:7px}
+.col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.col-name{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col-count{font-size:11px;padding:1px 6px;border-radius:10px;font-weight:500}
+.col-body{padding:8px 8px 4px;display:flex;flex-direction:column;gap:5px;background:var(--bg1)}
+
+.sub-label{font-size:10px;color:var(--text3);padding:6px 2px 3px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;border-top:0.5px solid var(--border);margin-top:2px}
+.sub-label:first-child{border-top:none;padding-top:0;margin-top:0}
+
+.note-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;cursor:default;transition:border-color 0.12s;position:relative}
+.note-card:hover{border-color:var(--border2)}
+.note-num{font-size:10px;color:var(--text3);margin-bottom:3px}
+.note-text{font-size:12px;color:var(--text1);line-height:1.45}
+.note-del{position:absolute;top:6px;right:7px;background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;opacity:0;transition:opacity 0.1s;padding:0;line-height:1}
+.note-card:hover .note-del{opacity:1}
+
+.sub-add-row{display:flex;gap:5px;align-items:center;padding:4px 0}
+.sub-add-inp{flex:1;border:0.5px solid var(--border);border-radius:7px;padding:5px 8px;font-size:11px;font-family:inherit;background:var(--bg3);color:var(--text1);outline:none;min-width:0;transition:border-color 0.12s}
+.sub-add-inp:focus{border-color:var(--border2);background:var(--bg2)}
+.sub-add-inp::placeholder{color:var(--text3)}
+.plus-btn{width:22px;height:22px;border-radius:50%;border:none;background:var(--text1);color:var(--bg0);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;padding-bottom:1px}
+.plus-btn:hover{opacity:0.85}
+
+.col-footer{padding:6px 8px 8px;background:var(--bg1);border-top:0.5px solid var(--border);display:flex;gap:5px;align-items:center}
+.col-footer-inp{flex:1;border:0.5px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;font-family:inherit;background:var(--bg2);color:var(--text1);outline:none;min-width:0;transition:border-color 0.12s}
+.col-footer-inp:focus{border-color:var(--border2)}
+.col-footer-inp::placeholder{color:var(--text3)}
+
+.add-sub-btn{width:100%;padding:4px;font-size:11px;color:var(--text3);background:none;border:0.5px dashed var(--border);border-radius:7px;cursor:pointer;margin-top:2px;transition:all 0.12s}
+.add-sub-btn:hover{border-color:var(--border2);color:var(--text2);background:var(--bg3)}
+
+.add-col-btn{flex-shrink:0;width:180px;border:0.5px dashed var(--border2);border-radius:10px;height:54px;background:none;cursor:pointer;font-size:12px;color:var(--text3);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s}
+.add-col-btn:hover{border-color:var(--border2);color:var(--text2);background:var(--bg1)}
+
+.web-pane{position:relative;height:500px;background:var(--bg0);overflow:hidden}
+.web-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.web-cards{position:absolute;top:0;left:0;width:100%;height:100%}
+.pin{position:absolute;background:var(--bg2);border:0.5px solid var(--border2);border-radius:9px;padding:9px 11px;width:150px;cursor:grab;user-select:none;transition:border-color 0.1s}
+.pin:hover{border-color:var(--border2)}
+.pin:active{cursor:grabbing}
+.pin-tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:8px;display:inline-block;margin-bottom:5px}
+.pin-txt{font-size:11px;color:var(--text1);line-height:1.45}
+.pin-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.web-controls{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:5}
+.wc-btn{padding:5px 11px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg2);font-size:11px;cursor:pointer;color:var(--text2);transition:all 0.12s}
+.wc-btn:hover{background:var(--bg3);color:var(--text1)}
+
+.toast{position:absolute;bottom:14px;right:14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:7px 13px;font-size:12px;color:var(--text2);display:none;z-index:20}
+.toast.show{display:block}
+
+.modal-wrap{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;z-index:30;min-height:400px}
+.modal-wrap.show{display:flex}
+.modal{background:var(--bg2);border:0.5px solid var(--border2);border-radius:12px;padding:18px;width:255px}
+.modal h3{font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text1)}
+.modal input{width:100%;border:0.5px solid var(--border2);border-radius:8px;padding:7px 9px;font-size:13px;font-family:inherit;background:var(--bg3);color:var(--text1);outline:none;margin-bottom:10px}
+.modal input:focus{border-color:#555;background:var(--bg2)}
+.modal input::placeholder{color:var(--text3)}
+.cpicks{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap}
+.cpick{width:19px;height:19px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color 0.1s}
+.cpick.sel{border-color:var(--text1)}
+.mbtns{display:flex;gap:8px;justify-content:flex-end}
+.mbtns button{padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;transition:all 0.12s}
+.mbcancel{border:0.5px solid var(--border2);background:none;color:var(--text2)}
+.mbcancel:hover{background:var(--bg3)}
+.mbok{border:none;background:var(--text1);color:var(--bg0)}
+.mbok:hover{opacity:0.88}
+</style>
+
+<div class="app" id="app" style="position:relative">
+<div class="topbar">
+  <span class="topbar-title">Idea vault</span>
+  <div class="topbar-right">
+    <button class="tab-pill active" onclick="switchTab('board',this)">Board</button>
+    <button class="tab-pill" onclick="switchTab('web',this)">Web</button>
+    <button class="obs-btn" onclick="syncObs()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Sync Obsidian
+    </button>
+  </div>
+</div>
+
+<div class="pane active" id="pane-board">
+  <div class="board-scroll" id="board-scroll"></div>
+</div>
+
+<div class="pane" id="pane-web">
+  <div class="web-pane" id="web-pane">
+    <svg class="web-svg" id="web-svg"></svg>
+    <div class="web-cards" id="web-cards"></div>
+    <div class="web-controls">
+      <button class="wc-btn" onclick="autoLayout()">Auto-layout</button>
+      <button class="wc-btn" onclick="clearLinks()">Clear links</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-wrap" id="modal">
+  <div class="modal">
+    <h3 id="m-title">New section</h3>
+    <input type="text" id="m-inp" placeholder="Name" />
+    <div class="cpicks" id="cpicks"></div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeModal()">Cancel</button>
+      <button class="mbok" onclick="confirmModal()">Create</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const PALETTE=['#9D95F5','#34C98A','#F07450','#5BA3F5','#F07BA0','#F0A830','#F06060','#85C840'];
+const DARK_BG={'#9D95F5':'#2a2840','#34C98A':'#1a3028','#F07450':'#3a2018','#5BA3F5':'#1a2c42','#F07BA0':'#3a1828','#F0A830':'#3a2c10','#F06060':'#3a1818','#85C840':'#222e14'};
+
+const TAG_MAP={'Session Questions':'session-questions','Sandbox':'sandbox','Meta-self Questions':'meta-self','Builder Questions':'builder-questions','Curiosity Questions':'curiosity-driven',"Future Problems' Web":'future-problems-web','Future Problems':'future-problems'};
+
+let nid=200,sid=50,cpick=PALETTE[0],mmode='',mparent=null,links=[],pinPos={};
+
+let sections=[
+  {id:1,name:'Session Questions',color:'#9D95F5',subs:[
+    {id:11,name:'General',notes:[]},
+  ]},
+
+  {id:2,name:'Sandbox',color:'#34C98A',subs:[
+  ]},
+
+  {id:3,name:'Meta-self Questions',color:'#F07450',subs:[
+  ]},
+
+  {id:4,name:'Builder Questions',color:'#5BA3F5',subs:[
+  ]},
+
+  {id:5,name:'Curiosity Questions',color:'#F07BA0',subs:[
+  ]},
+
+  {id:6,name:"Future Problems' Web",color:'#F0A830',subs:[
+  ]},
+
+  {id:7,name:'Future Problems',color:'#F06060',subs:[
+  ]}
+];
+
+function getSection(id){return sections.find(s=>s.id===id)}
+function getSub(subId){for(const s of sections){const ss=s.subs.find(x=>x.id===subId);if(ss)return{sec:s,sub:ss}}return null}
+function allNotes(){const r=[];for(const s of sections)for(const ss of s.subs)for(const n of ss.notes)r.push({note:n,sec:s,sub:ss});return r}
+function countNotes(sec){return sec.subs.reduce((a,ss)=>a+ss.notes.length,0)}
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function tagName(name){return TAG_MAP[name]||name.toLowerCase().replace(/\s+/g,'-')}
+
+function renderBoard(){
+  const scroll=document.getElementById('board-scroll');
+  scroll.innerHTML='';
+  sections.forEach(sec=>{
+    const bg=DARK_BG[sec.color]||'#222';
+    const col=document.createElement('div');
+    col.className='col';
+    const notesHtml=sec.subs.map(ss=>`
+      <div class="sub-label">${esc(ss.name)}</div>
+      ${ss.notes.map((n,i)=>`
+        <div class="note-card">
+          <div class="note-num">${i+1}</div>
+          <button class="note-del" onclick="delNote(${ss.id},${n.id})">✕</button>
+          <div class="note-text">${esc(n.t)}</div>
+        </div>
+      `).join('')}
+      <div class="sub-add-row">
+        <input class="sub-add-inp" id="sinp-${ss.id}" placeholder="Add to ${esc(ss.name)}..." onkeydown="if(event.key==='Enter')subAdd(${sec.id},${ss.id})"/>
+        <button class="plus-btn" onclick="subAdd(${sec.id},${ss.id})">+</button>
+      </div>
+    `).join('')+`<button class="add-sub-btn" onclick="openModal('sub',${sec.id})">+ subsection</button>`;
+
+    col.innerHTML=`
+      <div class="col-header" style="background:${bg}">
+        <div class="col-dot" style="background:${sec.color}"></div>
+        <span class="col-name" style="color:${sec.color}">${esc(sec.name)}</span>
+        <span class="col-count" style="background:${sec.color}25;color:${sec.color}">${countNotes(sec)}</span>
+      </div>
+      <div class="col-body">${notesHtml}</div>
+      <div class="col-footer">
+        <input class="col-footer-inp" id="inp-${sec.id}" placeholder="Quick note..." onkeydown="if(event.key==='Enter')quickAdd(${sec.id})"/>
+        <button class="plus-btn" onclick="quickAdd(${sec.id})">+</button>
+      </div>
+    `;
+    scroll.appendChild(col);
+  });
+  const addBtn=document.createElement('button');
+  addBtn.className='add-col-btn';
+  addBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add section';
+  addBtn.onclick=()=>openModal('section',null);
+  scroll.appendChild(addBtn);
+}
+
+function quickAdd(secId){
+  const inp=document.getElementById('inp-'+secId);
+  const t=inp.value.trim();if(!t)return;
+  const sec=getSection(secId);
+  if(!sec.subs.length)sec.subs.push({id:sid++,name:'General',notes:[]});
+  sec.subs[0].notes.push({id:nid++,t});
+  inp.value='';renderBoard();showToast('Note added');
+}
+function subAdd(secId,subId){
+  const inp=document.getElementById('sinp-'+subId);
+  const t=inp.value.trim();if(!t)return;
+  const found=getSub(subId);if(!found)return;
+  found.sub.notes.push({id:nid++,t});
+  renderBoard();showToast('Note added');
+}
+function delNote(subId,noteId){
+  const found=getSub(subId);if(!found)return;
+  found.sub.notes=found.sub.notes.filter(n=>n.id!==noteId);
+  renderBoard();
+}
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-board').classList.toggle('active',tab==='board');
+  document.getElementById('pane-web').classList.toggle('active',tab==='web');
+  if(tab==='web')renderWeb();
+}
+
+function syncObs(){
+  const md=sections.map(sec=>`# ${sec.name}\ntags: [${tagName(sec.name)}, idea-tracker]\n\n`+sec.subs.map(ss=>`## ${ss.name}\n`+ss.notes.map((n,i)=>`${i+1}. ${n.t}`).join('\n')).join('\n\n')).join('\n\n---\n\n');
+  fetch('http://localhost:27123/vault/idea-tracker.md',{method:'PUT',headers:{'Content-Type':'text/markdown','Authorization':'Bearer 3e27d6cb7f917968845b2878d6ddfad47633d16cde477e5513ee37bc27f2f9f3'},body:md})
+    .then(()=>showToast('Synced to Obsidian ✓'))
+    .catch(()=>showToast('Obsidian not running — see setup'));
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+
+function openModal(mode,parentId){
+  mmode=mode;mparent=parentId;cpick=PALETTE[0];
+  document.getElementById('m-title').textContent=mode==='section'?'New section':`New subsection in "${getSection(parentId)?.name||''}"`;
+  document.getElementById('m-inp').value='';
+  const cp=document.getElementById('cpicks');
+  if(mode==='section'){
+    cp.style.display='flex';
+    cp.innerHTML=PALETTE.map(c=>`<div class="cpick${c===cpick?' sel':''}" style="background:${c}" onclick="setPick('${c}',this)"></div>`).join('');
+  } else {cp.style.display='none';}
+  document.getElementById('modal').classList.add('show');
+  setTimeout(()=>document.getElementById('m-inp').focus(),40);
+}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function setPick(c,el){cpick=c;document.querySelectorAll('.cpick').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')}
+function confirmModal(){
+  const name=document.getElementById('m-inp').value.trim();if(!name)return;
+  if(mmode==='section')sections.push({id:sid++,name,color:cpick,subs:[{id:sid++,name:'General',notes:[]}]});
+  else if(mmode==='sub'){const s=getSection(mparent);if(s)s.subs.push({id:sid++,name,notes:[]})}
+  closeModal();renderBoard();
+}
+document.getElementById('m-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmModal();if(e.key==='Escape')closeModal()});
+
+function renderWeb(){
+  const container=document.getElementById('web-cards');
+  const notes=allNotes();
+  const existing={};
+  container.querySelectorAll('.pin').forEach(el=>{existing[el.dataset.nid]={x:parseInt(el.style.left),y:parseInt(el.style.top)}});
+  container.innerHTML='';
+  notes.forEach((item,i)=>{
+    const{note,sec,sub}=item;
+    const pin=document.createElement('div');
+    pin.className='pin';pin.dataset.nid=note.id;
+    const pos=existing[note.id]||pinPos[note.id]||{x:20+(i%4)*162,y:20+Math.floor(i/4)*122};
+    pin.style.left=pos.x+'px';pin.style.top=pos.y+'px';
+    const bg=DARK_BG[sec.color]||'#222';
+    pin.innerHTML=`<div class="pin-tag" style="background:${bg};color:${sec.color}">#${tagName(sec.name)}</div><div class="pin-txt">${esc(note.t)}</div><div class="pin-sub">${esc(sub.name)}</div>`;
+    makeDraggable(pin);
+    container.appendChild(pin);
+  });
+  drawLinks();
+}
+function makeDraggable(el){
+  let ox,oy,sl,st,on=false;
+  el.addEventListener('mousedown',e=>{on=true;ox=e.clientX;oy=e.clientY;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;el.style.zIndex=9;e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!on)return;el.style.left=(sl+e.clientX-ox)+'px';el.style.top=(st+e.clientY-oy)+'px';drawLinks()});
+  document.addEventListener('mouseup',()=>{if(on){on=false;el.style.zIndex='';pinPos[el.dataset.nid]={x:parseInt(el.style.left),y:parseInt(el.style.top)}}});
+}
+function autoLayout(){document.querySelectorAll('.pin').forEach((c,i)=>{c.style.left=(20+(i%4)*163)+'px';c.style.top=(20+Math.floor(i/4)*122)+'px'});drawLinks()}
+function clearLinks(){links=[];drawLinks()}
+function drawLinks(){
+  const svg=document.getElementById('web-svg');
+  svg.innerHTML=links.map(([a,b])=>{
+    const ea=document.querySelector(`.pin[data-nid="${a}"]`);
+    const eb=document.querySelector(`.pin[data-nid="${b}"]`);
+    if(!ea||!eb)return'';
+    const ax=parseInt(ea.style.left)+75,ay=parseInt(ea.style.top)+38;
+    const bx=parseInt(eb.style.left)+75,by=parseInt(eb.style.top)+38;
+    return`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="#3a3a45" stroke-width="1.5" stroke-dasharray="5,3"/>`;
+  }).join('');
+}
+
+renderBoard();
+</script>
